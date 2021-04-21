@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <list>
 
 #include "rocksdb/db.h"
 #include "rocksdb/slice.h"
@@ -25,50 +26,57 @@ int main() {
 
 
   Options options;
-  options.create_if_missing = true;
-  DB* db;
-  Status s = DB::Open(options, kDBPath, &db);
-  assert(s.ok());
+  options.create_if_missing = false;
+  //DB* db;
 
-  // create column family
-  ColumnFamilyHandle* cf;
-  s = db->CreateColumnFamily(ColumnFamilyOptions(), "new_cf", &cf);
-  assert(s.ok());
+  //Status s = DB::Open(options, kDBPath,  &db);
+  //assert(s.ok());
 
-  // close DB
-  s = db->DestroyColumnFamilyHandle(cf);
-  assert(s.ok());
-  delete db;
-
-  // open DB with two column families
-  std::vector<ColumnFamilyDescriptor> column_families;
-  // have to open default column family
-  column_families.push_back(ColumnFamilyDescriptor(
-      kDefaultColumnFamilyName, ColumnFamilyOptions()));
-  // open the new one, too
-  column_families.push_back(ColumnFamilyDescriptor(
-      "new_cf", ColumnFamilyOptions()));
-  std::vector<ColumnFamilyHandle*> handles;
-  s = DB::Open(DBOptions(), kDBPath, column_families, &handles, &db);
-  assert(s.ok());
-
-  // put and get from non-default column family
-  s = db->Put(WriteOptions(), handles[1], Slice("key"), Slice("value"));
-  assert(s.ok());
   std::string value;
-  s = db->Get(ReadOptions(), handles[1], Slice("key"), &value);
-  assert(s.ok());
 
-  std::cout << value << std::endl;
+  //         get column familiies descriptors
+  std::vector <std::string> family;
+  std::vector<ColumnFamilyDescriptor> descriptors;
+  rocksdb::Status status =
+      rocksdb::DB::ListColumnFamilies(rocksdb::DBOptions(),
+                                      kDBPath,
+                                      &family);
+  assert(status.ok());
 
-  // atomic write
-  WriteBatch batch;
-  batch.Put(handles[0], Slice("key2"), Slice("value2"));
-  batch.Put(handles[1], Slice("key3"), Slice("value3"));
-  batch.Delete(handles[0], Slice("key"));
-  s = db->Write(WriteOptions(), &batch);
-  assert(s.ok());
+  descriptors.reserve(family.size());
+  for (const std::string &familyName : family) {
+    descriptors.emplace_back(familyName,
+                             rocksdb::ColumnFamilyOptions());
+  }
 
+  //
+  std::list<std::unique_ptr<rocksdb::ColumnFamilyHandle>> handlers;
+  std::vector < rocksdb::ColumnFamilyHandle * > newHandles;
+  rocksdb::DB *dbStrPtr;
+
+  status =
+      rocksdb::DB::Open(
+          rocksdb::DBOptions(),
+          kDBPath,
+          descriptors,
+          &newHandles,
+          &dbStrPtr);
+  assert(status.ok()); //if 0 -> exit
+
+
+  for (rocksdb::ColumnFamilyHandle *ptr : newHandles) {
+    handlers.emplace_back(ptr);
+  }
+
+  std::cout << "newHandles.size() " << newHandles.size() <<std::endl;
+
+  std::string valuee;
+  status = dbStrPtr->Get(ReadOptions(), newHandles[1], Slice("key3"), &valuee);
+  assert(status.ok());
+  std::cout << valuee << std::endl;
+
+
+/*
   s = db->Get(ReadOptions(), handles[1], Slice("key3"), &value);
   assert(s.ok());
   std::cout << value << std::endl;
@@ -81,8 +89,9 @@ int main() {
   for (auto handle : handles) {
     s = db->DestroyColumnFamilyHandle(handle);
     assert(s.ok());
-  }
-  delete db;
+  }*/
+
+  //delete db;
 
   return 0;
 }

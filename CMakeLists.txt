@@ -22,10 +22,12 @@ HunterGate(
 )
 
 # TODO: rename project and delete this comment
-project(template VERSION 0.1.0)
+project(kvstorage VERSION 0.1.0)
 string(APPEND CMAKE_CXX_FLAGS " -pedantic -Werror -Wall -Wextra")
 string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
 string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
+
+find_package(Threads REQUIRED)
 
 hunter_add_package(gflags)
 find_package(gflags CONFIG REQUIRED)
@@ -44,16 +46,27 @@ add_library(${PROJECT_NAME} STATIC
   ${CMAKE_CURRENT_SOURCE_DIR}/sources/source.cpp
 )
 
-add_executable(demo
-  ${CMAKE_CURRENT_SOURCE_DIR}/demo/main.cpp
+add_executable(create_db
+        ${CMAKE_CURRENT_SOURCE_DIR}/demo/create_db.cpp
 )
+
+add_executable(dbcs
+        ${CMAKE_CURRENT_SOURCE_DIR}/demo/dbcs_main.cpp
+        )
 
 target_include_directories(${PROJECT_NAME} PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include>"
 )
 
-target_link_libraries(demo ${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME}
+        Threads::Threads
+        RocksDB::rocksdb
+        ${Boost_LIBRARIES})
+
+target_link_libraries(create_db ${PROJECT_NAME})
+
+target_link_libraries(dbcs ${PROJECT_NAME})
 
 if(BUILD_TESTS)
   add_executable(tests
@@ -88,7 +101,7 @@ endif()
 
 include(CPackConfig.cmake)
 
-install(TARGETS ${PROJECT_NAME} demo
+install(TARGETS ${PROJECT_NAME} create_db dbcs
   EXPORT "${PROJECT_NAME}-targets"
   RUNTIME DESTINATION bin
   ARCHIVE DESTINATION lib

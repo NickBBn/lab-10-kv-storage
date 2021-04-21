@@ -74,7 +74,7 @@ int main() {
   std::cout << value << std::endl;
 
   // drop column family
-  s = db->DropColumnFamily(handles[1]);
+  //s = db->DropColumnFamily(handles[1]);
   assert(s.ok());
 
   // close db
