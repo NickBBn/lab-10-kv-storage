@@ -24,7 +24,7 @@ std::string kDBPath = "hmmm.db";
 
 int main() {
 
-  DBhasher hasher(kDBPath);
+  DBhasher hasher(kDBPath, "new_db", 3);
   hasher.perform();
 
   return 0;

@@ -22,11 +22,11 @@ std::string kDBPath = "hmmm.db";
 
 int main() {
   // open DB
-
+  DB* db;
 
   Options options;
   options.create_if_missing = true;
-  DB* db;
+
   Status s = DB::Open(options, kDBPath, &db);
   assert(s.ok());
 
@@ -52,6 +52,8 @@ int main() {
   s = DB::Open(DBOptions(), kDBPath, column_families, &handles, &db);
   assert(s.ok());
 
+  std::cout << "Handles size" << handles.size() << std::endl;
+
   // put and get from non-default column family
   s = db->Put(WriteOptions(), handles[1], Slice("key"), Slice("value"));
   assert(s.ok());
@@ -65,7 +67,7 @@ int main() {
   WriteBatch batch;
 
   for (auto handle : handles){
-    for (size_t i = 0; i < 10; ++i){
+    for (size_t i = 0; i < 100; ++i){
       batch.Put(handle, Slice("key" + std::to_string(i)), Slice("value" + std::to_string(i)));
     }
   }
@@ -77,7 +79,7 @@ int main() {
   std::cout << value << std::endl;
 
   // drop column family
-  //s = src_db->DropColumnFamily(handles[1]);
+  //s = src_db->DropColumnFamily(src_handles[1]);
   assert(s.ok());
 
   // close src_db

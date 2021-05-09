@@ -43,8 +43,10 @@ find_package(GTest CONFIG REQUIRED)
 
 add_library(${PROJECT_NAME} STATIC
   # enum your files and delete this comment
-  ${CMAKE_CURRENT_SOURCE_DIR}/sources/source.cpp
-        sources/DBhasher.cpp include/DBhasher.hpp)
+        sources/DBhasher.cpp include/DBhasher.hpp
+        include/safe_queue.hpp
+        third-party/PicoSHA2/picosha2.h
+        third-party/ThreadPool/ThreadPool.h include/data_piece.hpp)
 
 add_executable(create_db
         ${CMAKE_CURRENT_SOURCE_DIR}/demo/create_db.cpp
@@ -56,6 +58,7 @@ add_executable(dbcs
 
 target_include_directories(${PROJECT_NAME} PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third-party>"
   "$<INSTALL_INTERFACE:include>"
 )
 
