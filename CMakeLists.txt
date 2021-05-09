@@ -44,7 +44,7 @@ find_package(GTest CONFIG REQUIRED)
 add_library(${PROJECT_NAME} STATIC
   # enum your files and delete this comment
   ${CMAKE_CURRENT_SOURCE_DIR}/sources/source.cpp
-)
+        sources/DBhasher.cpp include/DBhasher.hpp)
 
 add_executable(create_db
         ${CMAKE_CURRENT_SOURCE_DIR}/demo/create_db.cpp

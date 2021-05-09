@@ -12,7 +12,7 @@
 
 Утилита проходит в несколько потоков содежимое исходного хранилаща 
 ```md
-# db-cat source.db
+# src_db-cat source.src_db
 
 | column family | column family | column family |
 |---------------|---------------|---------------|
@@ -28,11 +28,11 @@
 и заполняет новое хранилище контрольной суммой для каждой записи
 
 ```Shell
-$ dbcs source.db --output dbcs-source.db
+$ dbcs source.src_db --output dbcs-source.src_db
 ```
 
 ```md
-# db-cat dbcs-source.db
+# src_db-cat dbcs-source.src_db
 
 | column family | column family | column family |
 |---------------|---------------|---------------|
@@ -66,7 +66,7 @@ $ dbcs --help
 
 Usage:
 
-  dbcs [options] <path/to/input/storage.db>
+  dbcs [options] <path/to/input/storage.src_db>
 
 Options:
 
@@ -76,11 +76,11 @@ Options:
   --thread-count <number>       = 
                                 = default: count of logical core
 
-  --output <path>               = <path/to/output/storage.db>
-                                = default: <path/to/input/dbcs-storage.db>
+  --output <path>               = <path/to/output/storage.src_db>
+                                = default: <path/to/input/dbcs-storage.src_db>
 
 # вычисление контрольной суммы
-$ dbcs /dir/file.db
+$ dbcs /dir/file.src_db
 ...
 ```
 

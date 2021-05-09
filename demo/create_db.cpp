@@ -63,9 +63,12 @@ int main() {
 
   // atomic write
   WriteBatch batch;
-  batch.Put(handles[0], Slice("key2"), Slice("value2"));
-  batch.Put(handles[1], Slice("key3"), Slice("value3"));
-  batch.Delete(handles[0], Slice("key"));
+
+  for (auto handle : handles){
+    for (size_t i = 0; i < 10; ++i){
+      batch.Put(handle, Slice("key" + std::to_string(i)), Slice("value" + std::to_string(i)));
+    }
+  }
   s = db->Write(WriteOptions(), &batch);
   assert(s.ok());
 
@@ -74,10 +77,10 @@ int main() {
   std::cout << value << std::endl;
 
   // drop column family
-  //s = db->DropColumnFamily(handles[1]);
+  //s = src_db->DropColumnFamily(handles[1]);
   assert(s.ok());
 
-  // close db
+  // close src_db
   for (auto handle : handles) {
     s = db->DestroyColumnFamilyHandle(handle);
     assert(s.ok());
