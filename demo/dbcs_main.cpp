@@ -9,6 +9,7 @@ int main(int argc, char **argv) {
   po::options_description desc("program options");
   desc.add_options()("src_path", po::value<std::string>(), "path to source database")(
       "new_path", po::value<std::string>(), "path to new database")(
+      "log_level", po::value<std::string>(), "level of logging")(
       "threads_count", po::value<size_t>(),
       "number of threads, that will be used while processing")(
       "help", "learn about program options");
@@ -25,10 +26,12 @@ int main(int argc, char **argv) {
   std::string src_path = vm["src_path"].as<std::string>();
   std::string new_path = (vm.count("new_path")) ?
                          vm["new_path"].as<std::string>() : (src_path+"_new");
+  std::string log_level = (vm.count("log_level")) ?
+                         vm["log_level"].as<std::string>() : "default";
   size_t threads_count = (vm.count("threads_count")) ?
                          vm["threads_count"].as<size_t>() : std::thread::hardware_concurrency();
   if (threads_count == 0) threads_count = std::thread::hardware_concurrency();
-  DBhasher hasher(src_path, new_path, threads_count);
+  DBhasher hasher(src_path, new_path, threads_count, log_level);
   hasher.perform();
   return 0;
 }

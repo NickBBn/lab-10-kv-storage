@@ -35,8 +35,8 @@ find_package(gflags CONFIG REQUIRED)
 hunter_add_package(rocksdb)
 find_package(RocksDB CONFIG REQUIRED)
 
-hunter_add_package(Boost COMPONENTS program_options)
-find_package(Boost CONFIG REQUIRED program_options)
+hunter_add_package(Boost COMPONENTS program_options log filesystem system chrono thread regex date_time atomic)
+find_package(Boost CONFIG REQUIRED program_options log filesystem system chrono thread regex date_time atomic)
 
 hunter_add_package(GTest)
 find_package(GTest CONFIG REQUIRED)
@@ -46,7 +46,7 @@ add_library(${PROJECT_NAME} STATIC
         sources/DBhasher.cpp include/DBhasher.hpp
         include/safe_queue.hpp
         third-party/PicoSHA2/picosha2.h
-        third-party/ThreadPool/ThreadPool.h include/data_piece.hpp)
+        third-party/ThreadPool/ThreadPool.h include/data_piece.hpp include/logger.hpp)
 
 add_executable(create_db
         ${CMAKE_CURRENT_SOURCE_DIR}/demo/create_db.cpp

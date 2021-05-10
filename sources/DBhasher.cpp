@@ -3,9 +3,10 @@
 //
 
 #include "DBhasher.hpp"
-DBhasher::DBhasher(std::string _kDBpath, std::string _new_path, size_t _threads_count)
+DBhasher::DBhasher(std::string _kDBpath, std::string _new_path,
+                   const size_t& _threads_count, std::string _log_level)
     :   threads_count(_threads_count)
-      , kDBpath(std::move(_kDBpath))
+      , src_path(std::move(_kDBpath))
       , new_path(std::move(_new_path))
       , src_db(nullptr)
       , new_db(nullptr)
@@ -15,29 +16,35 @@ DBhasher::DBhasher(std::string _kDBpath, std::string _new_path, size_t _threads_
       , pieces_to_hash(0)
       , pieces_to_write(0)
       , pieces_to_read(0)
+      , log_level(std::move(_log_level))
 {
   data_to_hash = new safe_queue<data_piece>;
   data_to_write = new safe_queue<data_piece>;
 }
 
 void DBhasher::perform() {
+  logger::logging_init(log_level);
   get_descriptors();
   rocksdb::Status status;
   status =
-      rocksdb::DB::Open( rocksdb::DBOptions(), kDBpath, descriptors,
+      rocksdb::DB::Open( rocksdb::DBOptions(), src_path, descriptors,
           &src_handles, &src_db);
   assert(status.ok());
-  print_db(src_database);
+  BOOST_LOG_TRIVIAL(info) << "Source db " << src_db
+                          << " opened successfully" << std::endl;
+  //print_db(src_database);
   start_reading();
   start_hashing();
   create_new_db();
   status = rocksdb::DB::Open(rocksdb::DBOptions(),new_path,
                              descriptors, &new_handles, &new_db);
   assert(status.ok());
+  BOOST_LOG_TRIVIAL(info) << "New db " << new_db
+                          << " created and opened successfully" << std::endl;
   start_writing();
-  //std::this_thread::sleep_for(std::chrono::seconds(10));
   global_work.lock();
-  print_db(new_database);
+  BOOST_LOG_TRIVIAL(info) << "Done processing databases" << std::endl;
+  //print_db(new_database);
   global_work.unlock();
   close_both_db();
 }
@@ -59,7 +66,8 @@ void DBhasher::print_db(database db) {
     std::unique_ptr<rocksdb::Iterator> it(
         cur_db->NewIterator(rocksdb::ReadOptions(), handle));
     for (it->SeekToFirst(); it->Valid(); it->Next()) {
-      std::cout << it->key().ToString() << " : " << it->value().ToString() << std::endl;
+      std::cout << it->key().ToString() << " : "
+                << it->value().ToString() << std::endl;
     }
     std::cout << std::endl;
   }
@@ -69,8 +77,7 @@ void DBhasher::get_descriptors() {
   std::vector <std::string> families;
   rocksdb::Status status =
       rocksdb::DB::ListColumnFamilies(rocksdb::DBOptions(),
-                                      kDBpath,
-                                      &families);
+                                      src_path, &families);
   assert(status.ok());
 
   descriptors.reserve(families.size());
@@ -88,8 +95,8 @@ void DBhasher::create_new_db() {
 
   rocksdb::ColumnFamilyHandle* cf;
   for (const auto &descriptor : descriptors){
-    status = new_db->CreateColumnFamily(rocksdb::ColumnFamilyOptions(), descriptor.name, &cf);
-    std::cout << descriptor.name << " in cycle" << std::endl;
+    status = new_db->CreateColumnFamily(rocksdb::ColumnFamilyOptions(),
+                                        descriptor.name, &cf);
     delete cf;
   }
   assert(status.ok());
@@ -97,6 +104,7 @@ void DBhasher::create_new_db() {
 }
 
 void DBhasher::start_reading() {
+
   static const auto reading_func = [this](rocksdb::ColumnFamilyHandle* handle){
     ++pieces_to_read;
     std::unique_ptr<rocksdb::Iterator> it(
@@ -107,15 +115,17 @@ void DBhasher::start_reading() {
                           it->key().ToString(),
                           it->value().ToString()});
       ++pieces_to_hash;
-      //std::cout << "reading" << it->key().ToString() << " " << it->value().ToString() << " ; handle : " << handle << std::endl;
     }
     --pieces_to_read;
-    if ((pieces_to_read == 0) && (stop_read)) stop_hash = true;
+    if ((pieces_to_read == 0) && (stop_read)){
+      stop_hash = true;
+    }
   };
   ThreadPool pool_read(threads_count);
   for (auto& handle : src_handles){
     pool_read.enqueue(reading_func, handle);
   }
+  BOOST_LOG_TRIVIAL(info) << "Reading started" << std::endl;
   stop_read = true;
 }
 
@@ -124,8 +134,13 @@ void DBhasher::start_hashing() {
     while (!(stop_hash && (pieces_to_hash <= 0))){
       if (!data_to_hash->is_empty()){
         data_piece data = data_to_hash->pop();
+        std::string old_value = data.value;
         data.value = picosha2::hash256_hex_string(data.key + data.value);
-        std::cout << data.key << " " << data.value << " " << data.handle << std::endl;
+        BOOST_LOG_TRIVIAL(trace) << "Calculated hash: " << std::endl
+                                 << "From column \""  << data.handle->GetName()
+                                 << "\"" << data.key << " + " << old_value
+                                 << " = "
+                                 << data.value << std::endl;
         data_to_write->push(std::move(data));
         --pieces_to_hash;
         ++pieces_to_write;
@@ -137,6 +152,7 @@ void DBhasher::start_hashing() {
   for(size_t i = 0; i < threads_count; ++i){
     pool_hash.enqueue(hashing_func);
   }
+  BOOST_LOG_TRIVIAL(info) << "Hashing started" << std::endl;
 }
 
 void DBhasher::start_writing() {
@@ -150,8 +166,8 @@ void DBhasher::start_writing() {
         catch (...) {
           continue;
         }
-        batch.Put(data.handle, rocksdb::Slice(data.key), rocksdb::Slice(data.value));
-        //std::cout << "writing" << std::endl;
+        batch.Put(data.handle, rocksdb::Slice(data.key),
+                  rocksdb::Slice(data.value));
         --pieces_to_write;
       }
     }
@@ -163,6 +179,7 @@ void DBhasher::start_writing() {
   for(size_t i = 0; i < threads_count; ++i){
     pool_write.enqueue(writing_func);
   }
+  BOOST_LOG_TRIVIAL(info) << "Writing started" << std::endl;
 }
 
 void DBhasher::close_both_db() {
@@ -177,6 +194,7 @@ void DBhasher::close_both_db() {
     assert(status.ok());
   }
   delete new_db;
+  BOOST_LOG_TRIVIAL(info) << "Both databases closed successfully" << std::endl;
 }
 
 DBhasher::~DBhasher() {

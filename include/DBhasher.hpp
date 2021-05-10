@@ -5,16 +5,19 @@
 #ifndef INCLUDE_DBHASHER_HPP_
 #define INCLUDE_DBHASHER_HPP_
 
+#include <rocksdb/db.h>
+
+#include <iostream>
+
 #include "PicoSHA2/picosha2.h"
 #include "ThreadPool/ThreadPool.h"
-#include <iostream>
-#include "safe_queue.hpp"
-#include "data_piece.hpp"
-#include <rocksdb/db.h>
 #include "atomic"
-#include "rocksdb/slice.h"
-#include "shared_mutex"
+#include "data_piece.hpp"
+#include "logger.hpp"
 #include "mutex"
+#include "rocksdb/slice.h"
+#include "safe_queue.hpp"
+#include "shared_mutex"
 
 enum database{
   new_database [[maybe_unused]] = 0,
@@ -24,9 +27,11 @@ enum database{
 class DBhasher {
  public:
   explicit DBhasher(std::string _kDBpath, std::string _new_path,
-                    size_t _threads_count);
+                    const size_t& _threads_count, std::string _log_level);
   ~DBhasher();
   void perform();
+
+ private:
   void print_db(database db);
   void get_descriptors();
   void create_new_db();
@@ -37,7 +42,7 @@ class DBhasher {
 
  private:
   size_t threads_count;
-  std::string kDBpath;
+  std::string src_path;
   std::string new_path;
   rocksdb::DB* src_db;
   rocksdb::DB* new_db;
@@ -53,6 +58,7 @@ class DBhasher {
   std::atomic_int pieces_to_write;
   std::atomic_int pieces_to_read;
   std::shared_mutex global_work;
+  std::string log_level;
 };
 
 #endif  // INCLUDE_DBHASHER_HPP_
