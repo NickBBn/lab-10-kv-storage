@@ -10,6 +10,7 @@
 #include "rocksdb/db.h"
 class data_piece{
  public:
+  data_piece(){};
   data_piece(rocksdb::ColumnFamilyHandle* _handle, std::string _key,
              std::string _value)
       :   handle(_handle)

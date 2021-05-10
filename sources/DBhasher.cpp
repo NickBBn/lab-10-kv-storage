@@ -35,7 +35,7 @@ void DBhasher::perform() {
                              descriptors, &new_handles, &new_db);
   assert(status.ok());
   start_writing();
-  std::this_thread::sleep_for(std::chrono::seconds(10));
+  //std::this_thread::sleep_for(std::chrono::seconds(10));
   global_work.lock();
   print_db(new_database);
   global_work.unlock();
@@ -123,8 +123,7 @@ void DBhasher::start_hashing() {
   static const auto hashing_func = [this]{
     while (!(stop_hash && (pieces_to_hash <= 0))){
       if (!data_to_hash->is_empty()){
-        data_piece data = data_to_hash->front();
-        data_to_hash->pop();
+        data_piece data = data_to_hash->pop();
         data.value = picosha2::hash256_hex_string(data.key + data.value);
         std::cout << data.key << " " << data.value << " " << data.handle << std::endl;
         data_to_write->push(std::move(data));
@@ -146,8 +145,11 @@ void DBhasher::start_writing() {
     rocksdb::WriteBatch batch;
     while (!(stop_write && (pieces_to_write <= 0))){
       if (!data_to_write->is_empty()){
-        data_piece data = data_to_write->front();
-        data_to_write->pop();
+        data_piece data;
+        try { data = data_to_write->pop(); }
+        catch (...) {
+          continue;
+        }
         batch.Put(data.handle, rocksdb::Slice(data.key), rocksdb::Slice(data.value));
         //std::cout << "writing" << std::endl;
         --pieces_to_write;

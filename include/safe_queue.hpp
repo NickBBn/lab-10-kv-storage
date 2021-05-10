@@ -11,7 +11,7 @@ template <typename T>
 class safe_queue {
  public:
   T front();
-  void pop();
+  T pop();
   void push(const T& obj);
   void push(T&& obj);
   bool is_empty();
@@ -28,9 +28,14 @@ T safe_queue<T>::front() {
 }
 
 template <typename T>
-void safe_queue<T>::pop() {
+T safe_queue<T>::pop() {
   std::lock_guard<std::mutex> lock(_mutex);
-  if (!_queue.empty()) return _queue.pop();
+  if (!_queue.empty()){
+   T tmp = _queue.front();
+   _queue.pop();
+   return tmp;
+  }
+  else throw std::runtime_error("Queue is empty");
 }
 
 template <typename T>

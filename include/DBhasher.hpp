@@ -14,6 +14,7 @@
 #include "atomic"
 #include "rocksdb/slice.h"
 #include "shared_mutex"
+#include "mutex"
 
 enum database{
   new_database [[maybe_unused]] = 0,
