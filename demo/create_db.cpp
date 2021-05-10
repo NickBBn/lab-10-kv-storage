@@ -17,7 +17,7 @@ using namespace rocksdb;
 #if defined(OS_WIN)
 std::string kDBPath = "C:\\Windows\\TEMP\\rocksdb_column_families_example";
 #else
-std::string kDBPath = "hmmm.db";
+std::string kDBPath = "hmmm";
 #endif
 
 int main() {

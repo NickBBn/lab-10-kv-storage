@@ -50,6 +50,7 @@ class DBhasher {
   std::atomic_bool stop_write;
   std::atomic_int pieces_to_hash;
   std::atomic_int pieces_to_write;
+  std::atomic_int pieces_to_read;
   std::shared_mutex global_work;
 };
 

@@ -14,6 +14,7 @@ DBhasher::DBhasher(std::string _kDBpath, std::string _new_path, size_t _threads_
       , stop_write(false)
       , pieces_to_hash(0)
       , pieces_to_write(0)
+      , pieces_to_read(0)
 {
   data_to_hash = new safe_queue<data_piece>;
   data_to_write = new safe_queue<data_piece>;
@@ -34,6 +35,7 @@ void DBhasher::perform() {
                              descriptors, &new_handles, &new_db);
   assert(status.ok());
   start_writing();
+  std::this_thread::sleep_for(std::chrono::seconds(10));
   global_work.lock();
   print_db(new_database);
   global_work.unlock();
@@ -96,8 +98,7 @@ void DBhasher::create_new_db() {
 
 void DBhasher::start_reading() {
   static const auto reading_func = [this](rocksdb::ColumnFamilyHandle* handle){
-    static size_t works_counter = 0;
-    ++works_counter;
+    ++pieces_to_read;
     std::unique_ptr<rocksdb::Iterator> it(
         src_db->NewIterator(rocksdb::ReadOptions(), handle));
     for (it->SeekToFirst(); it->Valid(); it->Next()) {
@@ -106,10 +107,10 @@ void DBhasher::start_reading() {
                           it->key().ToString(),
                           it->value().ToString()});
       ++pieces_to_hash;
-      //std::cout << it->key().ToString() << " " << it->value().ToString() << " ; handle : " << handle << std::endl;
+      //std::cout << "reading" << it->key().ToString() << " " << it->value().ToString() << " ; handle : " << handle << std::endl;
     }
-    --works_counter;
-    if ((works_counter == 0) && (stop_read)) stop_hash = true;
+    --pieces_to_read;
+    if ((pieces_to_read == 0) && (stop_read)) stop_hash = true;
   };
   ThreadPool pool_read(threads_count);
   for (auto& handle : src_handles){
