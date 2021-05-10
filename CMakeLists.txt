@@ -50,7 +50,7 @@ add_library(${PROJECT_NAME} STATIC
 
 add_executable(create_db
         ${CMAKE_CURRENT_SOURCE_DIR}/demo/create_db.cpp
-)
+        )
 
 add_executable(dbcs
         ${CMAKE_CURRENT_SOURCE_DIR}/demo/dbcs_main.cpp
