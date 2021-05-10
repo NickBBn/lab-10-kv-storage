@@ -1,16 +1,16 @@
-//
-// Created by niickson on 5/9/21.
-//
+//Copyright [2021] <nickgeo.winner@gmail.com>
 
-#ifndef KVSTORAGE_DATA_PIECE_HPP
-#define KVSTORAGE_DATA_PIECE_HPP
+#ifndef INCLUDE_DATA_PIECE_HPP_
+#define INCLUDE_DATA_PIECE_HPP_
 
 #include <utility>
 #include "DBhasher.hpp"
 #include "rocksdb/db.h"
+#include "string"
+
 class data_piece{
  public:
-  data_piece(){};
+  data_piece(){}
   data_piece(rocksdb::ColumnFamilyHandle* _handle, std::string _key,
              std::string _value)
       :   handle(_handle)
@@ -26,4 +26,4 @@ class data_piece{
   friend class DBhasher;
 };
 
-#endif  // KVSTORAGE_DATA_PIECE_HPP
+#endif  // INCLUDE_DATA_PIECE_HPP_

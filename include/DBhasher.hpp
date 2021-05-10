@@ -1,6 +1,4 @@
-//
-// Created by niickson on 4/22/21.
-//
+//Copyright [2021] <nickgeo.winner@gmail.com>
 
 #ifndef INCLUDE_DBHASHER_HPP_
 #define INCLUDE_DBHASHER_HPP_
@@ -18,6 +16,8 @@
 #include "rocksdb/slice.h"
 #include "safe_queue.hpp"
 #include "shared_mutex"
+#include "vector"
+#include "string"
 
 enum database{
   new_database [[maybe_unused]] = 0,

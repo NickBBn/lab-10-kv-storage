@@ -1,6 +1,4 @@
-//
-// Created by niickson on 4/22/21.
-//
+//Copyright [2021] <nickgeo.winner@gmail.com>
 
 #include "DBhasher.hpp"
 DBhasher::DBhasher(std::string _kDBpath, std::string _new_path,
@@ -27,7 +25,7 @@ void DBhasher::perform() {
   get_descriptors();
   rocksdb::Status status;
   status =
-      rocksdb::DB::Open( rocksdb::DBOptions(), src_path, descriptors,
+      rocksdb::DB::Open(rocksdb::DBOptions(), src_path, descriptors,
           &src_handles, &src_db);
   assert(status.ok());
   BOOST_LOG_TRIVIAL(info) << "Source db " << src_db
@@ -36,7 +34,7 @@ void DBhasher::perform() {
   start_reading();
   start_hashing();
   create_new_db();
-  status = rocksdb::DB::Open(rocksdb::DBOptions(),new_path,
+  status = rocksdb::DB::Open(rocksdb::DBOptions(), new_path,
                              descriptors, &new_handles, &new_db);
   assert(status.ok());
   BOOST_LOG_TRIVIAL(info) << "New db " << new_db
@@ -55,8 +53,7 @@ void DBhasher::print_db(database db) {
   if (db == new_database) {
     cur_db = new_db;
     cur_handles = new_handles;
-  }
-  else {
+  } else {
     cur_db = src_db;
     cur_handles = src_handles;
   }
@@ -82,7 +79,7 @@ void DBhasher::get_descriptors() {
 
   descriptors.reserve(families.size());
   for (const std::string &family : families) {
-    descriptors.emplace_back(family,rocksdb::ColumnFamilyOptions());
+    descriptors.emplace_back(family, rocksdb::ColumnFamilyOptions());
   }
 }
 
@@ -90,7 +87,7 @@ void DBhasher::create_new_db() {
   rocksdb::Status status;
   rocksdb::Options options;
   options.create_if_missing = true;
-  status = rocksdb::DB::Open( options, new_path, &new_db);
+  status = rocksdb::DB::Open(options, new_path, &new_db);
   assert(status.ok());
 
   rocksdb::ColumnFamilyHandle* cf;
@@ -104,7 +101,6 @@ void DBhasher::create_new_db() {
 }
 
 void DBhasher::start_reading() {
-
   static const auto reading_func = [this](rocksdb::ColumnFamilyHandle* handle){
     ++pieces_to_read;
     std::unique_ptr<rocksdb::Iterator> it(
@@ -149,7 +145,7 @@ void DBhasher::start_hashing() {
     stop_write = true;
   };
   ThreadPool pool_hash(threads_count);
-  for(size_t i = 0; i < threads_count; ++i){
+  for (size_t i = 0; i < threads_count; ++i){
     pool_hash.enqueue(hashing_func);
   }
   BOOST_LOG_TRIVIAL(info) << "Hashing started" << std::endl;
@@ -176,7 +172,7 @@ void DBhasher::start_writing() {
     global_work.unlock_shared();
   };
   ThreadPool pool_write(threads_count);
-  for(size_t i = 0; i < threads_count; ++i){
+  for (size_t i = 0; i < threads_count; ++i){
     pool_write.enqueue(writing_func);
   }
   BOOST_LOG_TRIVIAL(info) << "Writing started" << std::endl;

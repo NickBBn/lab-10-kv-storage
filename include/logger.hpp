@@ -1,9 +1,7 @@
-//
-// Created by niickson on 5/10/21.
-//
+//Copyright [2021] <nickgeo.winner@gmail.com>
 
-#ifndef KVSTORAGE_LOGGER_HPP
-#define KVSTORAGE_LOGGER_HPP
+#ifndef INCLUDE_LOGGER_HPP_
+#define INCLUDE_LOGGER_HPP_
 
 #include <iomanip>
 #include <iostream>
@@ -15,6 +13,7 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/expressions/keyword.hpp>
 #include <boost/log/support/date_time.hpp>
+#include "string"
 
 
 namespace logging = boost::log;
@@ -62,12 +61,11 @@ class logger{
     }
 
     logging::core::get()->set_filter(
-        logging::trivial::severity >= min_severity_level
-        );
+        logging::trivial::severity >= min_severity_level);
 
     logging::add_common_attributes();
   }
 };
 
 
-#endif  // KVSTORAGE_LOGGER_HPP
+#endif  // INCLUDE_LOGGER_HPP_
