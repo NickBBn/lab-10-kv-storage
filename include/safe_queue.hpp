@@ -34,9 +34,9 @@ T safe_queue<T>::pop() {
    T tmp = _queue.front();
    _queue.pop();
    return tmp;
-  }
-  else
+  } else {
     throw std::runtime_error("Queue is empty");
+  }
 }
 
 template <typename T>
