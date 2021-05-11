@@ -57,7 +57,7 @@ void DBhasher::print_db(database db) {
     cur_db = src_db;
     cur_handles = src_handles;
   }
-  for (auto handle : cur_handles){
+  for (auto & handle : cur_handles){
     std::cout << "Column : " << handle->GetName();
     std::cout << std::endl;
     std::unique_ptr<rocksdb::Iterator> it(
