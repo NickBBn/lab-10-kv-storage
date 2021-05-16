@@ -43,8 +43,8 @@ void DBhasher::perform() {
   global_work.lock();
   BOOST_LOG_TRIVIAL(info) << "Done processing databases" << std::endl;
   //print_db(new_database);
-  global_work.unlock();
   close_both_db();
+  global_work.unlock();
 }
 
 void DBhasher::print_db(database db) {
@@ -117,8 +117,8 @@ void DBhasher::start_reading() {
       stop_hash = true;
     }
   };
-  ThreadPool pool_read(threads_count);
-  for (auto& handle : src_handles){
+  ThreadPool pool_read(threads_count); // treads_count = 4
+  for (auto& handle : src_handles){ // src_handles.size() = 10
     pool_read.enqueue(reading_func, handle);
   }
   BOOST_LOG_TRIVIAL(info) << "Reading started" << std::endl;
@@ -159,7 +159,7 @@ void DBhasher::start_writing() {
       if (!data_to_write->is_empty()){
         data_piece data;
         try { data = data_to_write->pop(); }
-        catch (...) {
+        catch (...){
           continue;
         }
         batch.Put(data.handle, rocksdb::Slice(data.key),
@@ -180,12 +180,12 @@ void DBhasher::start_writing() {
 
 void DBhasher::close_both_db() {
   rocksdb::Status status;
-  for (auto handle : src_handles) {
+  for (auto &handle : src_handles) {
     status = src_db->DestroyColumnFamilyHandle(handle);
     assert(status.ok());
   }
   delete src_db;
-  for (auto handle : new_handles) {
+  for (auto &handle : new_handles) {
     status = new_db->DestroyColumnFamilyHandle(handle);
     assert(status.ok());
   }

@@ -44,11 +44,11 @@ class DBhasher {
   size_t threads_count;
   std::string src_path;
   std::string new_path;
-  rocksdb::DB* src_db;
+  rocksdb::DB* src_db; //база данных
   rocksdb::DB* new_db;
-  std::vector<rocksdb::ColumnFamilyHandle*> src_handles;
+  std::vector<rocksdb::ColumnFamilyHandle*> src_handles; //столбцы
   std::vector<rocksdb::ColumnFamilyHandle*> new_handles;
-  std::vector<rocksdb::ColumnFamilyDescriptor> descriptors;
+  std::vector<rocksdb::ColumnFamilyDescriptor> descriptors; //названия столбца
   safe_queue<data_piece>* data_to_hash;
   safe_queue<data_piece>* data_to_write;
   std::atomic_bool stop_hash;
